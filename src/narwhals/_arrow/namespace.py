@@ -332,10 +332,6 @@ class ArrowNamespace(
         return pc.if_else(when.fill_null(pa.scalar(False)), then, otherwise)
 
     def corr(self, a: ArrowExpr, b: ArrowExpr, *, method: CorrelationMethod) -> ArrowExpr:
-        if method != "pearson":
-            msg = "Only 'pearson' correlation is supported for Pyarrow."
-            raise NotImplementedError(msg)
-
         def func(df: ArrowDataFrame) -> list[ArrowSeries]:
             a_series = df._evaluate_single_output_expr(a)
             arr1 = a_series.native
@@ -343,6 +339,11 @@ class ArrowNamespace(
             valid = pc.and_(pc.is_valid(arr1), pc.is_valid(arr2))
             arr1 = pc.filter(arr1, valid)
             arr2 = pc.filter(arr2, valid)
+            if method == "spearman":
+                arr1, arr2 = (
+                    a_series._with_native(arr).rank("average", descending=False).native
+                    for arr in (arr1, arr2)
+                )
 
             dev1 = pc.subtract(arr1, pc.mean(arr1))
             dev2 = pc.subtract(arr2, pc.mean(arr2))

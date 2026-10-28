@@ -57,7 +57,10 @@ def test_corr_expr_spearman(
 ) -> None:
     context = (
         does_not_raise()
-        if any(x in str(constructor) for x in ("pandas", "polars", "modin", "cudf"))
+        if any(
+            x in str(constructor)
+            for x in ("pandas", "polars", "modin", "cudf", "pyarrow_table")
+        )
         else pytest.raises(NotImplementedError)
     )
     df = nw.from_native(constructor(data))
@@ -115,7 +118,7 @@ def test_corr_series_spearman(
     )
     df = nw.from_native(constructor_eager(data))
     with context:
-        result = df.select(nw.corr(df[a], df[b]).round(2))
+        result = df.select(nw.corr(df[a], df[b], method="spearman").round(2))
         expected = {output_name: [expected_corr]}
         assert_equal_data(result, expected)
 
