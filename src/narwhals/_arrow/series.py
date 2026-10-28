@@ -1031,15 +1031,7 @@ class ArrowSeries(EagerSeries["ChunkedArrayAny"]):
         )
 
     def rank(self, method: RankMethod, *, descending: bool) -> Self:
-        if method == "average":
-            msg = (
-                "`rank` with `method='average' is not supported for pyarrow backend. "
-                "The available methods are {'min', 'max', 'dense', 'ordinal'}."
-            )
-            raise ValueError(msg)
-
         sort_keys: Order = "descending" if descending else "ascending"
-        tiebreaker: TieBreaker = "first" if method == "ordinal" else method
 
         native_series: ArrayOrChunkedArray
         sortable_series = sortable(self.native)
@@ -1050,7 +1042,15 @@ class ArrowSeries(EagerSeries["ChunkedArrayAny"]):
 
         null_mask = pc.is_null(native_series)
 
-        rank = pc.rank(native_series, sort_keys=sort_keys, tiebreaker=tiebreaker)
+        if method == "average":
+            rank_min, rank_max = (
+                pc.rank(native_series, sort_keys=sort_keys, tiebreaker=tiebreaker)
+                for tiebreaker in ("min", "max")
+            )
+            rank = pc.divide(pc.add(rank_min, rank_max).cast(pa.float64()), lit(2.0))
+        else:
+            tiebreaker: TieBreaker = "first" if method == "ordinal" else method
+            rank = pc.rank(native_series, sort_keys=sort_keys, tiebreaker=tiebreaker)
 
         result = pc.if_else(null_mask, lit(None, rank.type), rank)
         return self._with_native(result)

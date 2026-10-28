@@ -80,21 +80,11 @@ def test_rank_expr(
     ):
         pytest.skip()
 
-    context = (
-        pytest.raises(
-            ValueError,
-            match=r"`rank` with `method='average' is not supported for pyarrow backend.",
-        )
-        if "pyarrow_table" in str(constructor_eager) and method == "average"
-        else does_not_raise()
-    )
+    df = nw.from_native(constructor_eager(data))
 
-    with context:
-        df = nw.from_native(constructor_eager(data))
-
-        result = df.select(nw.col("a").rank(method=method))
-        expected_data = {"a": expected[method]}
-        assert_equal_data(result, expected_data)
+    result = df.select(nw.col("a").rank(method=method))
+    expected_data = {"a": expected[method]}
+    assert_equal_data(result, expected_data)
 
 
 @pytest.mark.parametrize("method", rank_methods)
@@ -117,21 +107,11 @@ def test_rank_series(
     ):
         pytest.skip()
 
-    context = (
-        pytest.raises(
-            ValueError,
-            match=r"`rank` with `method='average' is not supported for pyarrow backend.",
-        )
-        if "pyarrow_table" in str(constructor_eager) and method == "average"
-        else does_not_raise()
-    )
+    df = nw.from_native(constructor_eager(data), eager_only=True)
 
-    with context:
-        df = nw.from_native(constructor_eager(data), eager_only=True)
-
-        result = {"a": df["a"].rank(method=method)}
-        expected_data = {"a": expected[method]}
-        assert_equal_data(result, expected_data)
+    result = {"a": df["a"].rank(method=method)}
+    expected_data = {"a": expected[method]}
+    assert_equal_data(result, expected_data)
 
 
 @pytest.mark.skipif(PANDAS_VERSION < PkgVersion("2.1"), reason="too old for nullable")
@@ -222,21 +202,11 @@ def test_lazy_rank_expr(
         # `rank` is not implemented in Dask
         request.applymarker(pytest.mark.xfail)
 
-    context = (
-        pytest.raises(
-            ValueError,
-            match=r"`rank` with `method='average' is not supported for pyarrow backend.",
-        )
-        if "pyarrow_table" in str(constructor) and method == "average"
-        else does_not_raise()
-    )
+    df = nw.from_native(constructor(data))
 
-    with context:
-        df = nw.from_native(constructor(data))
-
-        result = df.with_columns(a=nw.col("a").rank(method=method)).sort("i").select("a")
-        expected_data = {"a": expected[method]}
-        assert_equal_data(result, expected_data)
+    result = df.with_columns(a=nw.col("a").rank(method=method)).sort("i").select("a")
+    expected_data = {"a": expected[method]}
+    assert_equal_data(result, expected_data)
 
 
 @pytest.mark.parametrize("method", rank_methods)
@@ -267,25 +237,15 @@ def test_lazy_rank_expr_desc(
         # `rank` is not implemented in Dask
         request.applymarker(pytest.mark.xfail)
 
-    context = (
-        pytest.raises(
-            ValueError,
-            match=r"`rank` with `method='average' is not supported for pyarrow backend.",
-        )
-        if "pyarrow_table" in str(constructor) and method == "average"
-        else does_not_raise()
+    df = nw.from_native(constructor(data))
+
+    result = (
+        df.with_columns(a=nw.col("a").rank(method=method, descending=True))
+        .sort("i")
+        .select("a")
     )
-
-    with context:
-        df = nw.from_native(constructor(data))
-
-        result = (
-            df.with_columns(a=nw.col("a").rank(method=method, descending=True))
-            .sort("i")
-            .select("a")
-        )
-        expected_data = {"a": expected_desc[method]}
-        assert_equal_data(result, expected_data)
+    expected_data = {"a": expected_desc[method]}
+    assert_equal_data(result, expected_data)
 
 
 @pytest.mark.parametrize("method", rank_methods)
