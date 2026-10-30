@@ -99,6 +99,7 @@ INHERITED_METHODS = frozenset(
         "to_pandas",
         "with_columns",
         "write_csv",
+        "write_ipc",
         "write_parquet",
     ]
 )
@@ -327,6 +328,7 @@ class PolarsDataFrame(PolarsBaseFrame[pl.DataFrame]):
     # NOTE: `write_csv` requires an `@overload` for `str | None`
     # Can't do that here 😟
     write_csv: Method[Any]
+    write_ipc: Method[None]
     write_parquet: Method[None]
 
     @classmethod

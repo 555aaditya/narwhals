@@ -16,6 +16,7 @@ from narwhals._arrow.utils import (
     repeat,
     sort_indices,
     sortable_table,
+    write_ipc_table,
 )
 from narwhals._compliant import EagerDataFrame
 from narwhals._utils import (
@@ -720,6 +721,9 @@ class ArrowDataFrame(
         import pyarrow.parquet as pp
 
         pp.write_table(self.native, file)
+
+    def write_ipc(self, file: str | Path | BytesIO) -> None:
+        write_ipc_table(self.native, file)
 
     @overload
     def write_csv(self, file: None) -> str: ...

@@ -1016,6 +1016,11 @@ class PandasLikeDataFrame(
     def write_parquet(self, file: str | Path | BytesIO) -> None:
         self.native.to_parquet(file)
 
+    def write_ipc(self, file: str | Path | BytesIO) -> None:
+        from narwhals._arrow.utils import write_ipc_table
+
+        write_ipc_table(self.to_arrow(), file)
+
     @overload
     def write_csv(self, file: None) -> str: ...
 

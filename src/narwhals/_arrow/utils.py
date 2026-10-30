@@ -13,6 +13,8 @@ from narwhals.exceptions import ColumnNotFoundError, InvalidOperationError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping, Sequence
+    from io import BytesIO
+    from pathlib import Path
     from typing import Literal, TypeAlias
 
     from typing_extensions import TypeIs
@@ -652,6 +654,13 @@ def _list_block_contains(block: ListArrayAny, item: NonNestedLiteral) -> pa.Bool
         if block.null_count == 0
         else pc.if_else(block.is_valid(), contains, None)
     )
+
+
+def write_ipc_table(table: pa.Table, file: str | Path | BytesIO) -> None:
+    """Write `table` in the Arrow IPC file format, uncompressed as in Polars."""
+    # The stubs omit `Path`, which `new_file` accepts at runtime.
+    with pa.ipc.new_file(file, table.schema) as writer:  # type: ignore[arg-type]
+        writer.write_table(table)
 
 
 def sortable(array: ChunkedArrayAny, /) -> ChunkedArrayAny:

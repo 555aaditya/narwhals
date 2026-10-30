@@ -1001,6 +1001,26 @@ class DataFrame(BaseFrame[DataFrameT]):
         """
         self._compliant_frame.write_parquet(file)
 
+    def write_ipc(self, file: str | Path | BytesIO) -> None:
+        """Write dataframe to an Arrow IPC (Feather v2) file.
+
+        Arguments:
+            file: String, path object or file-like object to which the dataframe will be
+                written.
+
+        Examples:
+            >>> import io
+            >>> import pyarrow as pa
+            >>> import narwhals as nw
+            >>> df_native = pa.table({"foo": [1, 2], "bar": [6.0, 7.0]})
+            >>> df = nw.from_native(df_native)
+            >>> buffer = io.BytesIO()
+            >>> df.write_ipc(buffer)
+            >>> pa.ipc.open_file(buffer).read_all().equals(df_native)
+            True
+        """
+        self._compliant_frame.write_ipc(file)
+
     def to_numpy(self) -> _2DArray:
         """Convert this DataFrame to a NumPy ndarray.
 
