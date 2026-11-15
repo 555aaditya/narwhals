@@ -159,9 +159,8 @@ def native_to_narwhals_dtype(ibis_dtype: IbisDataType, version: Version) -> DTyp
         return dtypes.Datetime(time_unit=_unit.value, time_zone=ibis_dtype.timezone)
     if is_interval(ibis_dtype):
         _time_unit = ibis_dtype.unit.value
-        if _time_unit not in {"ns", "us", "ms", "s"}:  # pragma: no cover
-            msg = f"Unsupported interval unit: {_time_unit}"
-            raise NotImplementedError(msg)
+        if _time_unit not in {"ns", "us", "ms", "s"}:
+            return dtypes.Unknown()
         return dtypes.Duration(_time_unit)
     if is_array(ibis_dtype):
         if ibis_dtype.length:

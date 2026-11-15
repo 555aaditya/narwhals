@@ -28,3 +28,18 @@ def ibis_constructor() -> Constructor:
 def test_from_native(ibis_constructor: Constructor) -> None:
     df = nw.from_native(ibis_constructor({"a": [1, 2, 3], "b": [4, 5, 6]}))
     assert df.columns == ["a", "b"]
+
+
+def test_unknown_dtype() -> None:
+    import ibis.expr.datatypes as idt
+    from ibis.common.temporal import IntervalUnit
+
+    table = ibis.table(
+        {"a": idt.Interval(unit=IntervalUnit.DAY), "b": idt.INET(), "c": idt.MACADDR()},
+        name="t",
+    )
+    assert nw.from_native(table).collect_schema() == {
+        "a": nw.Unknown,
+        "b": nw.Unknown,
+        "c": nw.Unknown,
+    }

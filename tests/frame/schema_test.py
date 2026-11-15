@@ -208,8 +208,46 @@ def test_unknown_dtype() -> None:
     pytest.importorskip("pandas")
     import pandas as pd
 
-    df = pd.DataFrame({"a": pd.period_range("2000", periods=3, freq="M")})
-    assert nw.from_native(df).schema == {"a": nw.Unknown}
+    df = pd.DataFrame(
+        {
+            "a": pd.period_range("2000", periods=3, freq="M"),
+            "b": pd.arrays.IntervalArray.from_breaks([0, 1, 2, 3]),
+            "c": [1 + 2j, 3j, 0j],
+        }
+    )
+    assert nw.from_native(df).schema == {
+        "a": nw.Unknown,
+        "b": nw.Unknown,
+        "c": nw.Unknown,
+    }
+
+
+def test_unknown_dtype_pyarrow() -> None:
+    pytest.importorskip("pyarrow")
+    import pyarrow as pa
+
+    union_field = pa.field("x", pa.int8())
+    table = pa.table(
+        {
+            "a": pa.nulls(1, pa.month_day_nano_interval()),
+            "b": pa.nulls(1, pa.dense_union([union_field])),
+            "c": pa.nulls(1, pa.sparse_union([union_field])),
+        }
+    )
+    assert nw.from_native(table).schema == {
+        "a": nw.Unknown,
+        "b": nw.Unknown,
+        "c": nw.Unknown,
+    }
+
+
+def test_unknown_dtype_duckdb() -> None:
+    pytest.importorskip("duckdb")
+    import duckdb
+
+    rel = duckdb.sql("SELECT union_value(k := 1::INT) AS a, '101'::BIT AS b")
+    assert rel is not None
+    assert nw.from_native(rel).collect_schema() == {"a": nw.Unknown, "b": nw.Unknown}
 
 
 def test_hash() -> None:
